@@ -1,0 +1,37 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.2",
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "You have new untagged images",
+            "size": "Medium",
+            "weight": "Bolder",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "Is that an image of a polar bear?",
+            "wrap": true
+        },
+        {
+            "type": "Image",
+            "url": "${$root.image}"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.Submit",
+            "title": "Yes",
+            "id": "polar-bear",
+            "data": "polar-bear"
+        },
+        {
+            "type": "Action.Submit",
+            "title": "No",
+            "id": "not-polar-bear",
+            "data": "not-polar-bear"
+        }
+    ]
+}
