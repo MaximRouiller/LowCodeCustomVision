@@ -6,12 +6,12 @@
             "defaultValue": "teams",
             "type": "String"
         },
-        "workflows_custom_vision_app_name": {
-            "defaultValue": "custom-vision-app",
+        "connections_sharepointonline_name": {
+            "defaultValue": "sharepointonline",
             "type": "String"
         },
-        "connections_onedriveforbusiness_name": {
-            "defaultValue": "onedriveforbusiness",
+        "workflows_sharepoint_customvision_name": {
+            "defaultValue": "sharepoint-customvision",
             "type": "String"
         },
         "integrationAccounts_polar_bear_account_name": {
@@ -22,10 +22,6 @@
             "defaultValue": "untagged-images-notification",
             "type": "String"
         },
-        "onedriveforbusiness_email" : {
-            "defaultValue": "",
-            "type": "string"
-        },
         "customvision_projectid" : {
             "defaultValue": "",
             "type": "string"
@@ -33,6 +29,13 @@
         "customvision_trainingkey" : {
             "defaultValue": "",
             "type": "string"
+        },
+        "sharepoint_siteid": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata":{
+                "description": "Looks like this https://company.sharepoint.com/sites/MySite"
+            }
         }
     },
     "variables": {},
@@ -52,14 +55,14 @@
         {
             "type": "Microsoft.Web/connections",
             "apiVersion": "2016-06-01",
-            "name": "[parameters('connections_onedriveforbusiness_name')]",
+            "name": "[parameters('connections_sharepointonline_name')]",
             "location": "eastus",
             "kind": "V1",
             "properties": {
-                "displayName": "[parameters('onedriveforbusiness_email')]",
+                "displayName": "example@example.com",
                 "customParameterValues": {},
                 "api": {
-                    "id": "[concat('/subscriptions/ca958577-a94e-4b72-89b4-1f348d4864a3/providers/Microsoft.Web/locations/eastus/managedApis/', parameters('connections_onedriveforbusiness_name'))]"
+                    "id": "[concat('/subscriptions/ca958577-a94e-4b72-89b4-1f348d4864a3/providers/Microsoft.Web/locations/eastus/managedApis/', parameters('connections_sharepointonline_name'))]"
                 }
             }
         },
@@ -70,7 +73,7 @@
             "location": "eastus",
             "kind": "V1",
             "properties": {
-                "displayName": "[parameters('onedriveforbusiness_email')]",
+                "displayName": "example@example.com",
                 "customParameterValues": {},
                 "api": {
                     "id": "[concat('/subscriptions/ca958577-a94e-4b72-89b4-1f348d4864a3/providers/Microsoft.Web/locations/eastus/managedApis/', parameters('connections_teams_name'))]"
@@ -80,10 +83,10 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('workflows_custom_vision_app_name')]",
+            "name": "[parameters('workflows_sharepoint_customvision_name')]",
             "location": "eastus",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('connections_onedriveforbusiness_name'))]"
+                "[resourceId('Microsoft.Web/connections', parameters('connections_sharepointonline_name'))]"
             ],
             "properties": {
                 "state": "Enabled",
@@ -105,25 +108,28 @@
                         }
                     },
                     "triggers": {
-                        "When_a_file_is_created": {
+                        "When_a_file_is_created_or_modified_in_a_folder": {
                             "recurrence": {
                                 "frequency": "Minute",
-                                "interval": 5
+                                "interval": 1
                             },
                             "metadata": {
-                                "b!oqyZc_WZyUqWq139gqCmadcRE3qNPWRIqb0W5r2m24tmt03SBh7iQrlJTC2822oR.01IQLNBGLZEWWGRR7XZBD242LOROIZFKI7": "/project15-collab/ToProcess"
+                                "%252fShared%2bDocuments%252fGeneral": "/Shared Documents/General"
                             },
                             "type": "ApiConnection",
                             "inputs": {
                                 "host": {
                                     "connection": {
-                                        "name": "@parameters('$connections')['onedriveforbusiness']['connectionId']"
+                                        "name": "@parameters('$connections')['sharepointonline']['connectionId']"
                                     }
                                 },
                                 "method": "get",
-                                "path": "/datasets/default/triggers/onnewfile",
+                                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('[parameters('sharepoint_siteid')]'))}/triggers/onupdatedfile",
                                 "queries": {
-                                    "folderId": "b!oqyZc_WZyUqWq139gqCmadcRE3qNPWRIqb0W5r2m24tmt03SBh7iQrlJTC2822oR.01IQLNBGLZEWWGRR7XZBD242LOROIZFKI7"
+                                    "folderId": "%252fShared%2bDocuments%252fGeneral",
+                                    "includeFileContent": true,
+                                    "inferContentType": true,
+                                    "queryParametersSingleEncoded": true
                                 }
                             }
                         }
@@ -148,10 +154,10 @@
                 "parameters": {
                     "$connections": {
                         "value": {
-                            "onedriveforbusiness": {
-                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connections_onedriveforbusiness_name'))]",
-                                "connectionName": "onedriveforbusiness",
-                                "id": "/subscriptions/ca958577-a94e-4b72-89b4-1f348d4864a3/providers/Microsoft.Web/locations/eastus/managedApis/onedriveforbusiness"
+                            "sharepointonline": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connections_sharepointonline_name'))]",
+                                "connectionName": "sharepointonline",
+                                "id": "/subscriptions/ca958577-a94e-4b72-89b4-1f348d4864a3/providers/Microsoft.Web/locations/eastus/managedApis/sharepointonline"
                             }
                         }
                     }
@@ -309,7 +315,7 @@
                                                     "body": {
                                                         "messageBody": "{\n    \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\n    \"type\": \"AdaptiveCard\",\n    \"version\": \"1.2\",\n    \"body\": [\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"You have new untagged images\",\n            \"size\": \"Medium\",\n            \"weight\": \"Bolder\",\n            \"wrap\": true\n        },\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"Is that an image of a polar bear?\",\n            \"wrap\": true\n        },\n        {\n            \"type\": \"Image\",\n            \"url\": \"@{items('For_each')['originalImageUri']}\"\n        }\n    ],\n    \"actions\": [\n        {\n            \"type\": \"Action.Submit\",\n            \"title\": \"Yes\",\n            \"id\": \"polar-bear\",\n            \"data\": \"polar-bear\"\n        },\n        {\n            \"type\": \"Action.Submit\",\n            \"title\": \"No\",\n            \"id\": \"not-polar-bear\",\n            \"data\": \"not-polar-bear\"\n        }\n    ]\n}",
                                                         "recipient": {
-                                                            "to": "[parameters('onedriveforbusiness_email')]"
+                                                            "to": "marouill@microsoft.com"
                                                         },
                                                         "shouldUpdateCard": true,
                                                         "updateMessage": "Thank you for tagging the image."
